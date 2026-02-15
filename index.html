@@ -417,7 +417,26 @@
   }
 
   update();
-  setInterval(update, 1000);
+
+  // Use requestAnimationFrame for reliable mobile updates
+  let lastSec = -1;
+  function tick() {
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (nowSec !== lastSec) {
+      lastSec = nowSec;
+      update();
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // Force update when tab becomes visible again (mobile resume)
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      lastSec = -1;
+      update();
+    }
+  });
 </script>
 </body>
 </html>
