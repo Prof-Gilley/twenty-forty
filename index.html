@@ -24,7 +24,7 @@
 
   html, body {
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-mono);
@@ -36,7 +36,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-height: 100vh;
     padding: 1.5rem;
+    padding-bottom: 3rem;
     position: relative;
   }
 
@@ -154,6 +156,27 @@
     margin-top: 0.4rem;
   }
 
+  .days-lost {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 4vw, 1.6rem);
+    line-height: 1;
+    letter-spacing: 0.04em;
+    margin-top: 0.6rem;
+    background: linear-gradient(135deg, var(--glow), var(--glow-alt));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .days-lost-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--glow);
+    opacity: 0.6;
+    margin-top: 0.2rem;
+  }
+
   /* Seconds row — spans full width, special treatment */
   .seconds-row {
     grid-column: 1 / -1;
@@ -233,9 +256,9 @@
 
   .progress-track {
     width: 100%;
-    height: 4px;
+    height: 6px;
     background: rgba(255,255,255,0.06);
-    border-radius: 4px;
+    border-radius: 6px;
     overflow: hidden;
   }
 
@@ -244,6 +267,20 @@
     border-radius: 4px;
     background: linear-gradient(90deg, var(--glow), var(--glow-alt));
     transition: width 1s linear;
+  }
+
+  .elapsed {
+    margin-top: 0.6rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-align: center;
+    opacity: 0.7;
+  }
+
+  .elapsed span {
+    color: var(--glow);
+    opacity: 0.8;
   }
 
   @keyframes fadeSlideIn {
@@ -275,7 +312,9 @@
   <div class="grid">
     <div class="cell">
       <div class="value" id="days">---</div>
-      <div class="label">Days</div>
+      <div class="label">Days Left</div>
+      <div class="days-lost" id="days-lost">---</div>
+      <div class="days-lost-label">Days Gone</div>
     </div>
     <div class="cell">
       <div class="value" id="hours">---</div>
@@ -303,26 +342,29 @@
 
   <div class="progress-wrap">
     <div class="progress-label">
-      <span>Today</span>
+      <span>4/20/2020</span>
       <span>4/20/2040</span>
     </div>
     <div class="progress-track">
       <div class="progress-fill" id="progress"></div>
     </div>
+    <div class="elapsed" id="elapsed"></div>
   </div>
 </div>
 
 <script>
   const TARGET = new Date('2040-04-20T00:00:00').getTime();
-  const START  = new Date('2026-02-15T00:00:00').getTime();
+  const START  = new Date('2020-04-20T00:00:00').getTime();
 
   const $days    = document.getElementById('days');
+  const $daysLost = document.getElementById('days-lost');
   const $hours   = document.getElementById('hours');
   const $minutes = document.getElementById('minutes');
   const $seconds = document.getElementById('seconds');
   const $weeks   = document.getElementById('weeks');
   const $wkExtra = document.getElementById('weeks-extra');
   const $progress = document.getElementById('progress');
+  const $elapsed  = document.getElementById('elapsed');
 
   function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -342,6 +384,7 @@
     }
 
     const totalSec = Math.floor(diff / 1000);
+    const elapsed = now - START;
     const d = Math.floor(totalSec / 86400);
     const h = Math.floor((totalSec % 86400) / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
@@ -351,6 +394,7 @@
     const remainDays = d % 7;
 
     $days.textContent    = d.toLocaleString();
+    $daysLost.textContent = Math.floor(elapsed / 86400000).toLocaleString();
     $hours.textContent   = pad(h);
     $minutes.textContent = pad(m);
     $seconds.textContent = pad(s);
@@ -358,10 +402,18 @@
     $wkExtra.textContent = remainDays > 0 ? `+ ${remainDays}d` : '';
 
     // Progress
-    const elapsed = now - START;
     const total   = TARGET - START;
     const pct     = Math.min(100, Math.max(0, (elapsed / total) * 100));
     $progress.style.width = pct.toFixed(4) + '%';
+
+    // Elapsed / time lost
+    const elSec = Math.floor(elapsed / 1000);
+    const eY = Math.floor(elSec / (365.25 * 86400));
+    const eD = Math.floor((elSec % (365.25 * 86400)) / 86400);
+    const eH = Math.floor((elSec % 86400) / 3600);
+    const eM = Math.floor((elSec % 3600) / 60);
+    const eS = elSec % 60;
+    $elapsed.innerHTML = `TIME ELAPSED &mdash; <span>${eY}y ${eD}d ${pad(eH)}h ${pad(eM)}m ${pad(eS)}s</span>`;
   }
 
   update();
